@@ -33,51 +33,51 @@ app.all('/api/' + apiVersion + '/*', function (req, res) {
     render(req, res);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function render(req, res) {
+  'use strict';
+  let urlPath = `${req.path}`.replace(`/${apiVersion}/`, '/'), // <-- /api/1.0.1/users
+      fullPath = path.join(__dirname, urlPath); // <-- /Users/yaroslavmuliar/Desktop/githubs/advanced-frontend/adv-fe08/api/users
 
-    var fileName = req.path + '/' + req.method.toLowerCase() + '.json';
-    //   /api/1.0.1/users/get.json
-    fileName = fileName.replace('/' + apiVersion + '/', '/');
-    //   /api/users/get.json
-    var filePath = path.join(__dirname, fileName);
-    console.log(req.method, filePath);
-    // /Users/puzankov/work/fs/node-js-getting-started/api/users/get.json
 
-    if (fs.statSync(filePath)) {
+  fs.readdir(fullPath, (err, files) => {
+    if (err) console.log(err);
 
-        res.setHeader('content-type', 'application/json');
+    files.forEach( (element, index) => {
+      let fileName = `${req.path}/${element}/${req.method.toLowerCase()}.json`.replace(`/${apiVersion}/`, '/'), // < /api/users/001/get.json
+          filePath = path.join(__dirname, fileName);    // /Users/yaroslavmuliar/Desktop/githubs/advanced-frontend/adv-fe08/api/users/001/get.json
 
-        fs.createReadStream(filePath).pipe(res);
-    }
-    else {
-        console.log('no such file', filePath);
+          fs.stat(filePath, (err, stats) => {
+            if (err) console.log(err);
 
-        res
-            .status(404)
-            .json([
-                {
-                    "info": {
-                        "success": false,
-                        "code": 12345
-                    }
-                }
-            ])
-            .end();
-    }
+            if (stats.isDirectory()) {
+
+              res.setHeader('content-type', 'application/json');
+              fs.createReadStream(filePath).pipe(res);
+
+            } else {
+               console.log('no such file', filePath);
+                   res
+                       .status(404)
+                       .json([
+                           {
+                               "info": {
+                                   "success": false,
+                                   "code": 12345
+                               }
+                           }
+                       ])
+                       .end();
+            }
+          })
+
+    });
+
+  });
+
+
+
+    // console.log('req.path = ', req.path);
+
 }
 
 //
@@ -91,5 +91,3 @@ function render(req, res) {
 //
 //    res.send(user);
 //});
-
-
